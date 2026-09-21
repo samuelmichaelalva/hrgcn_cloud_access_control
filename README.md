@@ -230,13 +230,3 @@ Visit `http://localhost:8000` in your web browser:
 3. **Custom Builder:** Configure user, device trust, role, and bypass actions to construct and evaluate arbitrary access requests.
 4. **Explainability:** Inspect the hierarchical relation attribution table to see which edge caused the anomaly.
 5. **Theme Switcher:** Toggle seamlessly between Light Mode and Dark Mode in the top navigation bar.
-
----
-
-## 👨‍🎓 10. Student & Project Details
-
-- **Student Name:** Samuel Michael Alva
-- **Roll Number:** 5024104
-- **Project Title:** AI-Powered Cloud Access Control using HRGCN
-- **Academic Domain:** Cloud Security & Applied Graph Neural Networks (Zero-Trust Architecture)
-- **Methodology Foundation:** HRGCN (Li et al., IEEE DSAA 2023)
