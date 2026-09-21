@@ -64,24 +64,24 @@ The prototype provides a modern Cyber-SOC dashboard with dual-theme support (**L
 
 ```mermaid
 graph TD
-    A[Cloud Access Activity Logs / Synthetic IAM Events] --> B[Heterogeneous Graph Construction]
-    B --> C[Nodes: User, Device, Role, Resource]
-    B --> D[Edges: uses, has_role, requests, accesses, permits]
+    A["Cloud Access Activity Logs / Synthetic IAM Events"] --> B["Heterogeneous Graph Construction"]
+    B --> C["Nodes: User, Device, Role, Resource"]
+    B --> D["Edges: uses, has_role, requests, accesses, permits"]
     
-    C & D --> E[HetGDA Augmentation Module]
-    E -->|Edge Perturbation / Replacement / Type Swapping| F[Self-Supervised Pseudo-Anomalies]
+    C & D --> E["HetGDA Augmentation Module"]
+    E -->|"Edge Perturbation / Replacement / Type Swapping"| F["Self-Supervised Pseudo-Anomalies"]
     
-    C & D --> G[HRGCN Message Passing Engine]
+    C & D --> G["HRGCN Message Passing Engine"]
     F --> G
     
-    G -->|Source-Dest Hierarchy W_{Tsrc, Tdst}| H[Multi-Relational Aggregation]
-    G -->|Edge Type Hierarchy W_{Te}| H
+    G -->|"Source-Dest Hierarchy (W_src_dst)"| H["Multi-Relational Aggregation"]
+    G -->|"Edge Type Hierarchy (W_edge)"| H
     
-    H --> I[Global Graph Pooling g = max_i x_i]
-    I --> J[Dual-Objective Loss: L_SVDD + α * L_SS]
+    H --> I["Global Graph Pooling (g = max_i x_i)"]
+    I --> J["Dual-Objective Loss (L_SVDD + alpha * L_SS)"]
     
-    J --> K[Anomaly Score & Threat Verdict]
-    K --> L[Interactive Security Dashboard]
+    J --> K["Anomaly Score & Threat Verdict"]
+    K --> L["Interactive Cyber-SOC Dashboard"]
 ```
 
 ### 🔹 Heterogeneous Graph Schema
