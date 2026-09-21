@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HRGCN CloudGuard | AI-Powered Cloud Access Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">HRGCN CloudGuard</h1>
+        <p class="brand-subtitle">Heterogeneous Graph-Level Anomaly Detection for Cloud Access Control</p>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="tab-monitor">
+          <span class="tab-icon">📊</span> Live Monitor & Graph
+        </button>
+        <button class="nav-tab" data-tab="tab-threats">
+          <span class="tab-icon">⚡</span> Threat Scenarios
+        </button>
+        <button class="nav-tab" data-tab="tab-explain">
+          <span class="tab-icon">🔍</span> Explainability
+        </button>
+        <button class="nav-tab" data-tab="tab-benchmarks">
+          <span class="tab-icon">📈</span> Benchmarks & Ablation
+        </button>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      <div class="status-badge status-online">
+        <span class="pulse-dot"></span> HRGCN Active
+      </div>
+      <button id="themeToggle" class="theme-toggle-btn" title="Toggle Light/Dark Theme">
+        <span class="theme-icon">🌙</span> <span class="theme-label">Dark Mode</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-main">
+
+    <!-- VIEW 1: Live Monitor & Graph Canvas -->
+    <section id="tab-monitor" class="view-panel active">
+      <div class="grid-three-col">
+        <!-- Left Column: Event Stream -->
+        <div class="panel-card stream-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">Cloud Access Activity Stream</h3>
+            <button id="btnGenerateSample" class="btn btn-secondary btn-sm">
+              <span class="btn-icon">⚡</span> Test Random Event
+            </button>
+          </div>
+          <div class="stream-filter-bar">
+            <input type="text" id="streamSearch" class="form-input" placeholder="Filter identities or resources..." />
+          </div>
+          <div class="stream-list" id="streamList">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Center Column: Heterogeneous Graph Canvas -->
+        <div class="panel-card canvas-panel">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title" id="currentScenarioTitle">Legitimate Engineering Routine Access</h3>
+              <p class="panel-sub" id="currentScenarioDesc">Evaluating active heterogeneous cloud access graph topology...</p>
+            </div>
+            <div class="canvas-actions">
+              <button id="btnResetCanvas" class="btn btn-icon" title="Reset View">🔄</button>
+              <button id="btnToggleLabels" class="btn btn-icon" title="Toggle Edge Labels">🏷️</button>
+            </div>
+          </div>
+
+          <!-- Legend Bar -->
+          <div class="graph-legend">
+            <div class="legend-item"><span class="legend-dot dot-user"></span> User</div>
+            <div class="legend-item"><span class="legend-dot dot-device"></span> Device</div>
+            <div class="legend-item"><span class="legend-dot dot-role"></span> Role</div>
+            <div class="legend-item"><span class="legend-dot dot-resource"></span> Cloud Resource</div>
+          </div>
+
+          <div class="canvas-container">
+            <canvas id="graphCanvas"></canvas>
+            <div id="graphTooltip" class="graph-tooltip"></div>
+          </div>
+        </div>
+
+        <!-- Right Column: Anomaly Assessment & Risk Gauge -->
+        <div class="panel-card assessment-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">HRGCN Decision Engine</h3>
+            <span id="modelAblationBadge" class="badge badge-info">Full HRGCN</span>
+          </div>
+
+          <!-- Verdict Banner -->
+          <div id="verdictBanner" class="verdict-banner verdict-allow">
+            <div class="verdict-icon" id="verdictIcon">✔</div>
+            <div class="verdict-text">
+              <div class="verdict-status" id="verdictStatus">ACCESS GRANTED</div>
+              <div class="verdict-sub" id="verdictRiskLevel">LOW RISK (LEGITIMATE)</div>
+            </div>
+          </div>
+
+          <!-- Risk Score Meter -->
+          <div class="gauge-section">
+            <div class="gauge-container">
+              <svg class="gauge-svg" viewBox="0 0 160 160">
+                <circle class="gauge-bg" cx="80" cy="80" r="65"></circle>
+                <circle id="gaugeProgress" class="gauge-progress" cx="80" cy="80" r="65"></circle>
+              </svg>
+              <div class="gauge-center">
+                <span id="gaugeValue" class="gauge-value">12.4%</span>
+                <span class="gauge-label">Anomaly Risk</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score Breakdown Metrics -->
+          <div class="metric-grid">
+            <div class="metric-box">
+              <span class="metric-label">SVDD Distance (d)</span>
+              <span id="metricSvddDist" class="metric-val font-mono">0.0842</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Self-Supervised (φ₂)</span>
+              <span id="metricSsScore" class="metric-val font-mono">0.0512</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Composite Score (S)</span>
+              <span id="metricTotalScore" class="metric-val font-mono">0.1098</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Inference Latency</span>
+              <span id="metricLatency" class="metric-val font-mono">0.41 ms</span>
+            </div>
+          </div>
+
+          <!-- Selected Node Details Drawer -->
+          <div class="node-inspector">
+            <h4 class="inspector-title">Entity Inspector</h4>
+            <div id="inspectorContent" class="inspector-content">
+              <p class="placeholder-text">Click any node on the graph to inspect its cloud IAM attributes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: Threat Scenarios & Custom Request Builder -->
+    <section id="tab-threats" class="view-panel">
+      <div class="grid-two-col">
+        <!-- Predefined Scenarios -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Pre-Configured Cloud Threat Scenarios</h3>
+              <p class="panel-sub">Simulate multi-stage zero-trust cloud attack vectors on the HRGCN model.</p>
+            </div>
+          </div>
+          <div class="scenario-grid" id="scenarioGrid">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Custom Request Builder -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Custom Access Request Builder</h3>
+              <p class="panel-sub">Synthesize custom entity-relation graphs and run live HRGCN anomaly inference.</p>
+            </div>
+          </div>
+          <form id="customRequestForm" class="custom-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">User Identity</label>
+                <select id="custUser" class="form-input">
+                  <option value="Alice_Lead_Dev">Alice (Lead Dev - Engineering)</option>
+                  <option value="Bob_Intern_Support">Bob (Junior Support Intern)</option>
+                  <option value="Eve_Contractor_External">Eve (External Contractor)</option>
+                  <option value="Compromised_DevOps_Bot">Compromised Automation Service</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Device Type & Trust</label>
+                <select id="custDevice" class="form-input">
+                  <option value="Corp_MacBook_Managed">Corporate Managed MacBook (Trust: 95%)</option>
+                  <option value="Corporate_Workstation">Secured Workstation (Trust: 90%)</option>
+                  <option value="BYOD_Personal_Android">Unmanaged Android Phone (Trust: 15%)</option>
+                  <option value="Tor_Exit_Proxy">Tor Exit Proxy Node (Trust: 5%)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Assigned IAM Role</label>
+                <select id="custRole" class="form-input">
+                  <option value="Dev_ReadWrite_Role">Developer Read/Write Role</option>
+                  <option value="Support_CRM_Role">Support Tier-1 CRM Role</option>
+                  <option value="SuperAdmin_KMS_Master">SuperAdmin KMS Master Key Role</option>
+                  <option value="SecOps_CloudTrail_Auditor">SecOps Audit & Logging Role</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target Cloud Resource</label>
+                <select id="custResource" class="form-input">
+                  <option value="App_Git_Staging_Repo">App Git Staging Repo (Sensitivity: Low)</option>
+                  <option value="Zendesk_CRM_Service">Zendesk CRM Portal (Sensitivity: Medium)</option>
+                  <option value="Prod_Payments_RDS_DB">Prod Payments RDS Database (Sensitivity: Critical)</option>
+                  <option value="KMS_Master_Root_Key">KMS Root Master Key (Sensitivity: Highest)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">MFA Authentication Status</label>
+                <select id="custMfa" class="form-input">
+                  <option value="1.0">Enabled & Verified (FIDO2 / Hardware Key)</option>
+                  <option value="0.0">Disabled / Missing (High Risk)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Direct Resource Bypass Action</label>
+                <select id="custBypass" class="form-input">
+                  <option value="none">Standard Policy Chain (User -> Role -> Resource)</option>
+                  <option value="direct_device">Untrusted Direct Device-to-Resource Access</option>
+                  <option value="direct_user">Direct User Request without Role Permission</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+              <span class="btn-icon">⚡</span> Construct Heterogeneous Graph & Run Inference
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: Explainability & Relation Attribution -->
+    <section id="tab-explain" class="view-panel">
+      <div class="grid-two-col">
+        <!-- Offending Relation Attribution Table -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Hierarchical Relation Attribution Matrix</h3>
+              <p class="panel-sub">Mathematical decomposition of graph relations across (T_src, T_dst, T_e).</p>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Relation Tuple</th>
+                  <th>Source Entity</th>
+                  <th>Target Entity</th>
+                  <th>Deviation Score</th>
+                  <th>Attribution Diagnosis</th>
+                </tr>
+              </thead>
+              <tbody id="attributionTableBody">
+                <!-- Populated dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2D Deep SVDD Hypersphere Projection -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Deep SVDD Hypersphere Projection</h3>
+              <p class="panel-sub">2D Principal projection of graph embedding g relative to center c.</p>
+            </div>
+          </div>
+          <div class="canvas-container">
+            <canvas id="svddCanvas"></canvas>
+          </div>
+          <div class="svdd-legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#00f0ff;"></span> Hypersphere Center c</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Normal Boundary R</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span> Active Graph Embedding g</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: Benchmarks & Ablation Studies -->
+    <section id="tab-benchmarks" class="view-panel">
+      <!-- Benchmark KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Full HRGCN ROC-AUC</span>
+          <span class="kpi-val text-emerald" id="kpiAuc">97.4%</span>
+          <span class="kpi-sub" id="kpiAucSub">+17.2% vs Baseline HetGCN</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Average Precision (AP)</span>
+          <span class="kpi-val text-cyan" id="kpiAp">95.8%</span>
+          <span class="kpi-sub" id="kpiApSub">+19.7% vs Baseline HetGCN</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Average Graph Latency</span>
+          <span class="kpi-val text-purple" id="kpiLatency">0.42 ms</span>
+          <span class="kpi-sub" id="kpiLatencySub">Sub-millisecond inference</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Model Parameter Size</span>
+          <span class="kpi-val text-amber">114 KB</span>
+          <span class="kpi-sub">Vectorized Pure PyTorch</span>
+        </div>
+      </div>
+
+      <div class="grid-two-col mt-4">
+        <!-- Ablation Study Table & Comparison -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Ablation Study: Architecture Comparison</h3>
+              <p class="panel-sub">Impact of Hierarchical Source-Destination and Edge Relations.</p>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Architecture Configuration</th>
+                  <th>ROC-AUC</th>
+                  <th>Avg Precision</th>
+                  <th>Latency</th>
+                  <th>Relative Improvement</th>
+                </tr>
+              </thead>
+              <tbody id="ablationTableBody">
+                <!-- Populated dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Project Reference & Academic Metadata Card -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">Academic & Reference Details</h3>
+              <p class="panel-sub">Original Research Paper & Project Documentation</p>
+            </div>
+          </div>
+          <div class="reference-content">
+            <div class="ref-block">
+              <h4 class="ref-heading">Research Paper Reference:</h4>
+              <p class="ref-text font-mono">
+                Jiaxi Li, Guansong Pang, Ling Chen, Mohammad-Reza Namazi-Rad. 
+                <strong>"HRGCN: Heterogeneous Graph-level Anomaly Detection with Hierarchical Relation-augmented Graph Neural Networks."</strong> 
+                IEEE International Conference on Data Science and Advanced Analytics (DSAA 2023). 
+                DOI: 10.1109/DSAA60987.2023.10302626
+              </p>
+            </div>
+
+            <div class="ref-block mt-3">
+              <h4 class="ref-heading">Cloud Access Control Adaptation:</h4>
+              <p class="ref-text">
+                This project adapts the HRGCN hierarchical message passing layer and HetGDA self-supervised data augmentation specifically to Enterprise Cloud IAM Access Graphs (Users, Devices, Roles, and Resources) to identify zero-trust security anomalies without requiring labeled attack samples.
+              </p>
+            </div>
+
+            <div class="ref-block mt-3 student-info-box">
+              <h4 class="ref-heading">Project Submission Details:</h4>
+              <ul class="student-list">
+                <li><strong>Project:</strong> AI-Based Cloud Access Control using HRGCN</li>
+                <li><strong>Framework:</strong> PyTorch, FastAPI, NetworkX, Vanilla Modern Web CSS/JS</li>
+                <li><strong>Ablation Benchmarks:</strong> Full HRGCN vs HRGCN-SDR vs HRGCN-ER vs Vanilla HetGCN</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
