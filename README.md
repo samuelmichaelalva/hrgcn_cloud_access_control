@@ -1,4 +1,4 @@
-# 🛡️ HRGCN CloudGuard: AI-Powered Cloud Access Control Anomaly Detection
+# HRGCN CloudGuard: AI-Powered Cloud Access Control Anomaly Detection
 
 > **Hierarchical Relation-Augmented Heterogeneous Graph Neural Networks for Enterprise Cloud IAM & Zero-Trust Authorization**
 
