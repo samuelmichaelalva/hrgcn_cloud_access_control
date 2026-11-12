@@ -30,8 +30,8 @@ The solution provides continuous Zero-Trust authorization (`ALLOW`, `CHALLENGE`,
 
 ### The Proposed Solution: Heterogeneous Graph-Level Anomaly Detection
 HRGCN CloudGuard reframes access requests into attributed Heterogeneous Information Networks (HIN):
-- **Graph Topology Representation:** Each access event is modeled as a 4-node, multi-edge graph $\mathcal{G} = (\mathcal{V}, \mathcal{E}, \mathcal{T}_v, \mathcal{T}_e, \mathbf{X})$ capturing the entity nodes (`User`, `Device`, `Role`, `Resource`) and their relational edges (`uses`, `has_role`, `requests_access`, `accesses`, `permits`).
-- **Hierarchical Relation Convolution:** The core HRGCN layer separates message passing across both entity-type pairs $(T_{src}, T_{dst})$ and relation types $T_e$, preserving semantic distinctions that standard homogeneous or flat heterogeneous GCNs collapse.
+- **Graph Topology Representation:** Each access event is modeled as a 4-node, multi-edge heterogeneous graph `G = (V, E, T_v, T_e, X)` capturing the entity nodes (`User`, `Device`, `Role`, `Resource`) and their relational edges (`uses`, `has_role`, `requests_access`, `accesses`, `permits`).
+- **Hierarchical Relation Convolution:** The core HRGCN layer separates message passing across both entity-type pairs `(T_src, T_dst)` and relation types `T_e`, preserving semantic distinctions that standard homogeneous or flat heterogeneous GCNs collapse.
 - **Unsupervised Normality Learning:** The network is trained purely on legitimate corporate access logs. An optimal hypersphere boundary is learned in the graph embedding space.
 - **Self-Supervised Contrastive Augmentation (HetGDA):** To prevent hypersphere collapse and teach the model the boundary of normality, HetGDA dynamically synthesizes realistic pseudo-anomalies during training via edge perturbation, edge replacement, and node/edge type swapping.
 - **Explainable Zero-Trust Decision Engine:** Composite anomaly scoring determines the authorization verdict while edge-level attribution pinpoints the exact anomalous transition (e.g., direct device socket connection bypassing role policies).
@@ -45,19 +45,19 @@ HRGCN CloudGuard reframes access requests into attributed Heterogeneous Informat
   - 5 Relation Types: `uses (0)`, `has_role (1)`, `requests_access (2)`, `accesses (3)`, `permits (4)`.
   - Standardized 8-dimensional continuous feature vectors capturing real-world IAM telemetry (MFA status, location risk, EDR compliance, device trust score, privilege tier, resource sensitivity, encryption status).
 - **Hierarchical Relation-Augmented Convolution (HRGCN):**
-  - Parameterized 5D tensor transformations $\mathbf{W} \in \mathbb{R}^{N_{src} \times N_{dst} \times N_{edge} \times d_{in} \times d_{out}}$ mapping distinct interaction semantics.
-  - Destination-specific self-loop transformations $\mathbf{W}_{self, T_{dst}}$ and GCN degree normalization.
+  - Parameterized 5D tensor transformations `W` of shape `(num_src_types × num_dst_types × num_edge_types × in_dim × out_dim)` mapping distinct interaction semantics.
+  - Destination-specific self-loop transformations `W_self` per entity type and GCN degree normalization.
   - Implemented in vectorized, dependency-free PyTorch without requiring external graph libraries (e.g., PyG or DGL).
 - **HetGDA Augmentation Module:**
   - Dynamic generation of self-supervised contrastive pseudo-anomalies during training.
   - Three distinct augmentation operators: *Edge Perturbation*, *Edge Replacement*, and *Node/Edge Type Swapping*.
 - **Dual-Objective Optimization:**
-  - Unifies One-Class Deep SVDD loss ($\mathcal{L}_{SVDD}$) and Self-Supervised Binary Cross-Entropy loss ($\mathcal{L}_{SS}$) with a tunable weighting coefficient $\alpha = 0.5$.
+  - Unifies One-Class Deep SVDD loss (`L_SVDD`) and Self-Supervised Binary Cross-Entropy loss (`L_SS`) with a tunable weighting coefficient `α = 0.5`.
 - **Calibrated Zero-Trust Policy Engine:**
-  - Real-time scoring $S(\mathcal{G}) = \|\mathbf{g} - \mathbf{c}\|^2 + \beta \cdot \phi_2(\mathbf{g})$ mapped to calibrated authorization actions:
-    - `ACCESS GRANTED (ALLOW)`: Risk $< 30\%$ (Score $< 0.36$)
-    - `STEP-UP MFA REQUIRED (CHALLENGE)`: $30\% \le \text{Risk} < 60\%$
-    - `ACCESS BLOCKED (BLOCK)`: Risk $\ge 60\%$ (Score $\ge 0.72$)
+  - Real-time scoring `S(G) = ||g - c||² + β · φ₂(g)` mapped to calibrated authorization actions:
+    - `ACCESS GRANTED (ALLOW)`: Risk < 30% (Score < 0.36)
+    - `STEP-UP MFA REQUIRED (CHALLENGE)`: 30% ≤ Risk < 60%
+    - `ACCESS BLOCKED (BLOCK)`: Risk ≥ 60% (Score ≥ 0.72)
 - **Relational Attribution & Explainability:**
   - Evaluates feature divergence and semantic policy violations per edge, pinpointing compromised hops for SOC analysts.
 - **Modern Cyber-SOC Dashboard:**
@@ -139,15 +139,26 @@ flowchart TD
 
 ### 1. Heterogeneous Graph Schema Definition
 An enterprise cloud access activity graph is represented as:
-$$\mathcal{G} = (\mathcal{V}, \mathcal{E}, \phi_v, \phi_e, \mathbf{X})$$
-where:
-- $\mathcal{V}$ is the node set ($|\mathcal{V}| = 4$).
-- $\mathcal{E}$ is the edge set ($|\mathcal{E}| \le 5$).
-- $\phi_v: \mathcal{V} \to \mathcal{T}_v$ maps nodes to entity types $\mathcal{T}_v = \{\text{User (0)}, \text{Device (1)}, \text{Role (2)}, \text{Resource (3)}\}$.
-- $\phi_e: \mathcal{E} \to \mathcal{T}_e$ maps edges to relation types $\mathcal{T}_e = \{\text{uses (0)}, \text{has\_role (1)}, \text{requests\_access (2)}, \text{accesses (3)}, \text{permits (4)}\}$.
-- $\mathbf{X} \in \mathbb{R}^{|\mathcal{V}| \times d_{in}}$ represents node attribute vectors ($d_{in} = 8$).
 
-#### Node Feature Representation ($d_{in} = 8$):
+$$G = (V, E, \phi_v, \phi_e, X)$$
+
+where:
+- **Node Set ($V$):** 4 cloud entities comprising 1 User, 1 Device, 1 Role, and 1 Resource ($|V| = 4$).
+- **Edge Set ($E$):** Up to 5 relational links connecting entities ($|E| \le 5$).
+- **Node Entity Types ($\mathcal{T}_v$):** Mapped via $\phi_v(u) \in \{0, 1, 2, 3\}$:
+  - `0: User`
+  - `1: Device`
+  - `2: Role`
+  - `3: Resource`
+- **Edge Relation Types ($\mathcal{T}_e$):** Mapped via $\phi_e(e) \in \{0, 1, 2, 3, 4\}$:
+  - `0: uses` (User $\to$ Device)
+  - `1: has_role` (User $\to$ Role)
+  - `2: requests_access` (User $\to$ Resource)
+  - `3: accesses` (Device $\to$ Resource)
+  - `4: permits` (Role $\to$ Resource)
+- **Node Feature Matrix ($X$):** $X \in \mathbb{R}^{4 \times 8}$ contains an 8-dimensional attribute vector for each entity.
+
+#### Node Feature Representation ($d_{\text{in}} = 8$):
 | Node Type | Feature Index Mapping & Telemetry Attributes |
 | :--- | :--- |
 | **User (0)** | `[department_id, seniority, mfa_active, location_risk, request_rate, previous_alerts, session_duration, auth_protocol]` |
@@ -158,54 +169,67 @@ where:
 ---
 
 ### 2. Hierarchical Relation Message Passing Layer
-Standard Graph Convolutional Networks (GCN) treat all neighbors uniformly. Relational GCNs (R-GCN) account only for edge types, ignoring source-target node type semantics. The HRGCN layer constructs dedicated transformation matrices for each unique tuple $(\phi_v(j), \phi_v(i), \phi_e(j, i))$.
+Standard Graph Convolutional Networks (GCN) treat all neighboring nodes uniformly. Relational GCNs (R-GCN) distinguish only edge types, ignoring source and destination entity semantics. The HRGCN layer constructs dedicated transformation matrices for each unique tuple $(\phi_v(j), \phi_v(i), \phi_e(j, i))$.
 
-For a destination node $i \in \mathcal{V}$ at layer $k$:
-$$\mathbf{x}_i^{(k)} = \text{LeakyReLU} \left( \sum_{j \in \mathcal{N}(i)} \frac{1}{\sqrt{\text{deg}(i) \cdot \text{deg}(j)}} \mathbf{W}_{(\phi_v(j), \phi_v(i), \phi_e(j, i))} \mathbf{x}_j^{(k-1)} + \mathbf{W}_{self, \phi_v(i)} \mathbf{x}_i^{(k-1)} + \mathbf{b} \right)$$
+For destination node $i \in V$ at layer $k$:
+
+$$x_i^{(k)} = \text{LeakyReLU} \left( \sum_{j \in \mathcal{N}(i)} \frac{1}{\sqrt{\deg(i) \cdot \deg(j)}} W_{(\phi_v(j), \phi_v(i), \phi_e(j, i))} x_j^{(k-1)} + W_{\text{self}, \phi_v(i)} x_i^{(k-1)} + b \right)$$
 
 where:
-- $\mathbf{W}_{(\cdot)} \in \mathbb{R}^{|\mathcal{T}_v| \times |\mathcal{T}_v| \times |\mathcal{T}_e| \times d_{in} \times d_{out}}$ is the hierarchical weight tensor.
-- $\mathbf{W}_{self, \phi_v(i)} \in \mathbb{R}^{d_{in} \times d_{out}}$ is the entity-specific self-loop transformation.
-- $\frac{1}{\sqrt{\text{deg}(i) \cdot \text{deg}(j)}}$ is the symmetric GCN normalization factor.
-- $\text{LeakyReLU}$ uses a negative slope of $0.1$.
+- $W \in \mathbb{R}^{4 \times 4 \times 5 \times d_{\text{in}} \times d_{\text{out}}}$ is the hierarchical relation weight tensor.
+- $W_{\text{self}, \phi_v(i)} \in \mathbb{R}^{d_{\text{in}} \times d_{\text{out}}}$ is the entity-specific self-loop transformation.
+- $\frac{1}{\sqrt{\deg(i) \cdot \deg(j)}}$ is the symmetric degree normalization coefficient.
+- $b \in \mathbb{R}^{d_{\text{out}}}$ is the layer bias vector.
+- $\text{LeakyReLU}$ uses a negative slope of 0.1.
 
 ---
 
 ### 3. Graph-Level Global Pooling
-Graph-level anomaly detection requires aggregating node representations into a single invariant representation $\mathbf{g}$. HRGCN applies global max-pooling across all node vectors:
-$$\mathbf{g} = \max_{i \in \mathcal{V}} \left( \mathbf{x}_i^{(K)} \right) \in \mathbb{R}^{d_{out}}$$
-where $K=2$ layers, projecting the graph into an embedding space of dimension $d_{out} = 16$.
+Graph-level anomaly detection requires aggregating node representations into a single invariant representation $g$. HRGCN applies global max-pooling across all node vectors:
+
+$$g = \max_{i \in V} \left( x_i^{(K)} \right) \in \mathbb{R}^{d_{\text{out}}}$$
+
+where $K = 2$ layers, projecting the access graph into an embedding vector of dimension $d_{\text{out}} = 16$.
 
 ---
 
 ### 4. Deep SVDD Objective (One-Class Hypersphere)
-During training on benign access graphs $\mathcal{D}_{train}$, the network maps normal graphs toward a fixed center vector $\mathbf{c} \in \mathbb{R}^{d_{out}}$:
-$$\mathcal{L}_{SVDD} = \|\mathbf{g} - \mathbf{c}\|_2^2 = \sum_{d=1}^{d_{out}} (g_d - c_d)^2$$
+During training on benign access graphs $\mathcal{D}_{\text{train}}$, the network maps normal graphs toward a fixed center vector $c \in \mathbb{R}^{d_{\text{out}}}$:
 
-**Center Initialization:** Before optimization, $\mathbf{c}$ is initialized as the empirical mean of benign graph representations:
-$$\mathbf{c} = \frac{1}{|\mathcal{D}_0|} \sum_{m \in \mathcal{D}_0} \mathbf{g}_m$$
+$$\mathcal{L}_{\text{SVDD}} = \|g - c\|_2^2 = \sum_{d=1}^{d_{\text{out}}} (g_d - c_d)^2$$
+
+**Center Initialization:** Before optimization, $c$ is initialized as the empirical mean of benign graph representations:
+
+$$c = \frac{1}{|\mathcal{D}_0|} \sum_{m \in \mathcal{D}_0} g_m$$
+
 To prevent trivial all-zero representation collapse, components with $|c_d| < \epsilon$ are clamped to $\epsilon = 0.1$. The center remains frozen throughout subsequent training.
 
 ---
 
 ### 5. HetGDA Self-Supervised Objective
-To regularize the hypersphere and provide explicit negative contrast without requiring real attack labels, **HetGDA** generates synthetic pseudo-anomalies $\tilde{\mathcal{G}}$ from normal graphs $\mathcal{G}$ using three operations:
-1. **Edge Perturbation:** Drops existing edges with rate $p=0.25$ and introduces random cross-entity links.
+To regularize the hypersphere and provide explicit negative contrast without requiring real attack labels, **HetGDA** generates synthetic pseudo-anomalies $\tilde{G}$ from normal graphs $G$ using three operations:
+1. **Edge Perturbation:** Drops existing edges with rate $p = 0.25$ and introduces random cross-entity links.
 2. **Edge Replacement:** Replaces valid permission edges with unauthorized links.
-3. **Node & Edge Type Swapping:** Randomly permutes entity roles and relations with rate $s=0.20$ to emulate privilege hijacking.
+3. **Node & Edge Type Swapping:** Randomly permutes entity roles and relations with rate $s = 0.20$ to emulate privilege hijacking.
 
-A discriminator projection head $\phi_2: \mathbb{R}^{d_{out}} \to [0, 1]$ (a 2-layer MLP with LeakyReLU and Sigmoid activation) is trained via Binary Cross-Entropy (BCE) to distinguish genuine benign graphs ($y=0$) from augmented pseudo-anomalies ($y=1$):
-$$\mathcal{L}_{SS} = -\log(1 - \phi_2(\mathbf{g})) - \log(\phi_2(\tilde{\mathbf{g}}))$$
+A discriminator projection head $\phi_2: \mathbb{R}^{d_{\text{out}}} \to [0, 1]$ (a 2-layer MLP with LeakyReLU and Sigmoid activation) is trained via Binary Cross-Entropy (BCE) to distinguish genuine benign graphs ($y = 0$) from augmented pseudo-anomalies ($y = 1$):
 
-### 6. Joint Training Loss & Anomaly Scoring
+$$\mathcal{L}_{\text{SS}} = -\log(1 - \phi_2(g)) - \log(\phi_2(\tilde{g}))$$
+
+---
+
+### 6. Joint Training Loss & Inference Scoring
 The combined optimization problem is:
-$$\mathcal{L}_{total} = \mathcal{L}_{SVDD} + \alpha \cdot \mathcal{L}_{SS} \quad (\alpha = 0.5)$$
 
-At inference time, the anomaly score for an incoming access graph $\mathcal{G}$ is evaluated as:
-$$S(\mathcal{G}) = \|\mathbf{g} - \mathbf{c}\|_2^2 + \beta \cdot \phi_2(\mathbf{g}) \quad (\beta = 0.5)$$
+$$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{SVDD}} + \alpha \cdot \mathcal{L}_{\text{SS}} \quad (\alpha = 0.5)$$
+
+At inference time, the anomaly score for an incoming access graph $G$ is evaluated as:
+
+$$S(G) = \|g - c\|_2^2 + \beta \cdot \phi_2(g) \quad (\beta = 0.5)$$
 
 The risk percentage is scaled as:
-$$\text{Risk } (\%) = \min\left(100.0, \, \max\left(0.0, \, \frac{S(\mathcal{G})}{1.2} \times 100\right)\right)$$
+
+$$\text{Risk}(\%) = \min\left(100.0, \, \max\left(0.0, \, \frac{S(G)}{1.2} \times 100\right)\right)$$
 
 ---
 
@@ -370,10 +394,10 @@ The FastAPI backend exposes the following endpoints:
 The repository includes an ablation evaluation module (`train_eval.py`) that systematically tests the contribution of each architectural component of the hierarchical relation convolution.
 
 Four model variants are evaluated:
-1. **Full HRGCN (Ours):** Hierarchical transformations parameterized over both source-destination node type pairs $(T_{src}, T_{dst})$ and relation types $T_e$.
-2. **HRGCN-SDR:** Evaluates source-destination node pair hierarchy only, removing edge relation specificity ($\text{num\_eff\_edges} = 1$).
-3. **HRGCN-ER:** Evaluates edge relation specificity only, removing node-pair hierarchy ($\text{num\_eff\_src} = 1$).
-4. **Baseline HetGCN:** Standard flat heterogeneous convolution without hierarchical relation decomposition.
+1. **Full HRGCN (Ours):** Hierarchical transformations parameterized over both source-destination node type pairs `(T_src, T_dst)` and relation types `T_e`.
+2. **HRGCN-SDR:** Evaluates source-destination node pair hierarchy only, removing edge relation specificity (`num_eff_edges = 1`).
+3. **HRGCN-ER:** Evaluates edge relation specificity only, removing node-pair hierarchy (`num_eff_src = 1`).
+4. **Baseline HetGCN:** Standard flat heterogeneous convolution without hierarchical relation decomposition (`num_eff_src = 1`, `num_eff_edges = 1`).
 
 #### Empirical Evaluation Summary (Recorded in `models/benchmark_metrics.json`):
 | Model Architecture | Source-Dest Hierarchy | Edge Relation Hierarchy | Latency (ms) | Training Time (s) | Evaluation Focus |
@@ -430,7 +454,7 @@ This implementation is directly grounded in academic research from top-tier mach
   author={Ruff, Lukas and Vandermeulen, Robert and Goernitz, Nico and Deecke, Lucas and Siddiqui, Shoaib Ahmed and Binder, Alexander and M{\"u}ller, Emmanuel and Kloft, Marius},
   booktitle={International Conference on Machine Learning (ICML)},
   pages={4393--4402},
-  year={2018},
+  year={2023},
   organization={PMLR}
 }
 
