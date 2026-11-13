@@ -10,6 +10,23 @@
 
 ---
 
+## Table of Contents
+
+- [1. Project Overview](#1-project-overview)
+- [2. Problem Statement & Proposed Solution](#2-problem-statement--proposed-solution)
+- [3. Key Features](#3-key-features)
+- [4. Screenshots & Dashboard Walkthrough](#4-screenshots--dashboard-walkthrough)
+- [5. System Architecture](#5-system-architecture)
+- [6. HRGCN Methodology & Mathematical Formulation](#6-hrgcn-methodology--mathematical-formulation)
+- [7. Technology Stack](#7-technology-stack)
+- [8. Project Structure](#8-project-structure)
+- [9. Installation, Training & Execution](#9-installation-training--execution)
+- [10. Results, Benchmarks & Limitations](#10-results-benchmarks--limitations)
+- [11. Research References](#11-research-references)
+- [12. Author & Contributions](#12-author--contributions)
+
+---
+
 ## 📌 1. Project Overview
 
 Modern multi-cloud environments (AWS, Microsoft Azure, Google Cloud Platform) process millions of access authorization requests each day across heterogeneous entities: **Users**, **Devices**, **IAM Roles**, and **Cloud Resources**. Traditional security boundaries rely on Role-Based Access Control (RBAC) and Attribute-Based Access Control (ABAC), evaluating access events as isolated point-in-time tuples against static policies. This creates critical operational blind spots: compromised credentials, unmanaged BYOD devices, unauthorized role assumption, and lateral data exfiltration frequently succeed because each isolated check evaluates to "valid" despite the contextual relational graph being malicious.
@@ -471,24 +488,17 @@ This implementation is directly grounded in academic research from top-tier mach
 
 ## 👨‍💻 12. Author & Contributions
 
-### Sole Developer & Researcher
-- **Name:** Samuel Michael Alva
-- **Roll Number:** 5024104
-- **Repository:** [https://github.com/samuelmichaelalva/hrgcn_cloud_access_control](https://github.com/samuelmichaelalva/hrgcn_cloud_access_control)
+| Field | Details |
+| :--- | :--- |
+| **Name** | Samuel Michael Alva |
+| **Roll Number** | 5024104 |
+| **Role** | Sole Developer |
+| **Repository** | [github.com/samuelmichaelalva/hrgcn_cloud_access_control](https://github.com/samuelmichaelalva/hrgcn_cloud_access_control) |
 
-### Contributions
-As the sole author and developer of this project, Samuel Michael Alva was responsible for the end-to-end design, implementation, and evaluation:
-- **Conceptual Design & Problem Formulation:** Modeled enterprise cloud IAM and Zero-Trust access authorization as an unsupervised heterogeneous graph-level anomaly detection problem.
-- **Model Development:** Designed and implemented the vectorized PyTorch HRGCN convolution layer (`core/hrgcn.py`), hierarchical relation tensors, destination-specific self-loops, and global graph pooling.
-- **Data Augmentation Engine (HetGDA):** Formulated and built the HetGDA module (`core/augmentation.py`) for edge perturbation, edge replacement, and node/edge type swapping.
-- **Objective Function Engineering:** Implemented the joint Deep SVDD hypersphere loss and self-supervised contrastive discriminator loss with numerical stability guarantees against hypersphere collapse.
-- **Dataset Synthesis:** Authored the realistic cloud IAM graph generator (`data/cloud_dataset.py`) supporting normal operations and 5 distinct enterprise cloud threat vectors.
-- **Backend & Inference API:** Built the asynchronous FastAPI server (`app.py`), relational attribution explainability logic, and REST endpoints.
-- **Cyber-SOC Dashboard & Visualization:** Developed the full frontend application (`static/index.html`, `static/styles.css`, `static/app.js`), featuring a custom HTML5 Canvas spring-physics graph renderer, dual light/dark theme engine, threat simulators, and benchmark visualization.
-- **Benchmarking & Documentation:** Designed the ablation experiment pipeline (`train_eval.py`), conducted performance evaluations, and authored the comprehensive documentation.
+This project was independently designed and built by Samuel Michael Alva as part of an academic submission in Cloud Security and Applied Graph Neural Networks. All components — the GNN model, augmentation engine, training pipeline, REST API, and web dashboard — were implemented from scratch.
 
 ---
 
 <p align="center">
-  <i>Developed as an advanced academic research project in Cloud Security and Applied Graph Neural Networks.</i>
+  <i>Developed as an academic project in Cloud Security and Applied Graph Neural Networks.</i>
 </p>
